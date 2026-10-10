@@ -30,7 +30,7 @@ REQUIRED_MIN_LINES = 50      # 登记要求：程序每页不少于 50 行
 MAX_CHARS_PER_LINE = 102     # 含行号的行宽上限（行号 4 + 2 空格 + 代码 96）
                              # 实测 8pt Consolas 在 17.8cm 宽度内可容纳约 100 字符
                              # （见 tools/calibrate_wrap.py），此处留出安全余量
-SEP_LEN = 60                 # 分隔线长度，避免过宽导致折行
+SEP_LEN = 60                 # 已废弃：正文不再插入分隔线，保留仅为兼容旧引用
 LINENO_WIDTH = 4             # 行号字段宽度（右对齐）
 LINENO_PREFIX = LINENO_WIDTH + 2          # 行号 + 两个空格
 MAX_CODE_CHARS = MAX_CHARS_PER_LINE - LINENO_PREFIX   # 代码本身允许的最大宽度
@@ -71,24 +71,21 @@ def read_source(rel_path):
 
 
 def collect_lines():
-    """返回 (逻辑行列表, 统计信息)"""
+    """返回 (逻辑行列表, 统计信息)
+
+    只收录源程序正文本身，不插入任何装饰性内容：
+      · 不放 ==== / ---- 这类横线；
+      · 不放「源程序清单」「// 源文件：xxx」这类说明与文件边界标记；
+      · 不放空行（源文件里的空行也折叠掉）。
+    这样每页能排满 LINES_PER_PAGE 行纯代码，不浪费版面。
+    """
     out = []
     stats = []
-    out.append("=" * SEP_LEN)
-    out.append("源程序清单（本软件全部源程序不足 60 页，按登记指南规定全部提交）")
-    out.append("软件名称：%s    版本号：%s" % (SOFTWARE_NAME, SOFTWARE_VERSION))
-    out.append("=" * SEP_LEN)
-    out.append("")
 
     for rel in SOURCE_FILES + ARCHIVE_FILES:
-        path = os.path.join(PROJECT_DIR, rel)
         lines = read_source(rel)
         physical = len(lines)
         kept = 0
-
-        out.append("-" * SEP_LEN)
-        out.append("// 源文件：%s" % rel)
-        out.append("-" * SEP_LEN)
 
         for line in lines:
             s = line.rstrip()
@@ -97,9 +94,6 @@ def collect_lines():
             out.append(s)
             kept += 1
 
-        out.append("")
-        out.append("// 源文件 %s 结束" % rel)
-        out.append("")
         stats.append((rel, physical, kept))
         log("  %-32s 物理行 %4d → 收录 %4d 行" % (rel, physical, kept))
 

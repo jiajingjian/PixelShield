@@ -46,8 +46,7 @@ SRC_DIR = os.path.join(PROJECT_ROOT, 'src')
 
 REQUIRED_SOURCES = [
     'main.py', 'gui.py', 'theme.py', 'utils.py', 'encryption.py', 'decryption.py',
-    'opencv_accelerator.py', 'simple_video_encryption.py', 'simple_video_decryption.py',
-    'video_utils.py',
+    'opencv_accelerator.py',
 ]
 
 

@@ -38,9 +38,9 @@ def main():
     os.makedirs(OUT_DIR, exist_ok=True)
 
     root = tk.Tk()
-    from gui import MediaCryptoGUI
+    from gui import ImageCryptoGUI
 
-    gui = MediaCryptoGUI(root)
+    gui = ImageCryptoGUI(root)
     root.update_idletasks()
     root.update()
     root.after(400, lambda: None)
@@ -96,13 +96,12 @@ def main():
 
     regions = [
         ("1", "存储目录", gbox(gui.dir_entry)),
-        ("2", "类型选择", gbox(gui.type_frame)),
-        ("3", "文件路径", gbox(gui.media_path_entry)),
-        ("4", "操作选择", gbox(gui.operation_frame)),
-        ("5", "进度与状态", gbox(gui.progress_frame)),
-        ("6", "执行 / 取消", gbox(gui.execute_btn.master)),
+        ("2", "图片路径", gbox(gui.media_path_entry)),
+        ("3", "操作选择", gbox(gui.operation_frame)),
+        ("4", "进度与状态", gbox(gui.progress_frame)),
+        ("5", "执行 / 取消", gbox(gui.execute_btn.master)),
     ]
-    regions = regions[:5]
+    regions = regions[:4]
 
     W, H = img.size
     print("窗口尺寸 %dx%d" % (W, H))
@@ -145,10 +144,9 @@ def main():
     img.save(os.path.join(OUT_DIR, "图6-界面操作指引.png"))
     print("已保存 图6-界面操作指引.png")
 
-    # ---------------- 图5：控件特写（类型选择 + 操作选择 + 进度 + 按钮） ----------------
+    # ---------------- 图5：控件特写（操作选择 + 进度 + 按钮） ----------------
     # 保留一张未标注的清晰特写，便于说明书中单独展示核心控件。
     boxes = [
-        gbox(gui.type_frame, 4),
         gbox(gui.operation_frame, 4),
         gbox(gui.progress_frame, 4),
         gbox(gui.execute_btn.master, 4),

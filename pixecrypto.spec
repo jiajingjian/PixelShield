@@ -42,9 +42,6 @@ hidden_imports = [
     'encryption',
     'decryption',
     'opencv_accelerator',
-    'simple_video_encryption',
-    'simple_video_decryption',
-    'video_utils',
 ]
 
 a = Analysis(  # noqa: F821

@@ -11,6 +11,7 @@
 用法：python verify_exe.py [exe路径]
 退出码 0 = 全部通过。
 """
+import ctypes
 import os
 import sys
 import time
@@ -36,14 +37,14 @@ DEC_DIR = os.path.join(EXE_DIR, "媒体", "已解密")
 WORK = os.path.join(tempfile.gettempdir(), "pixe_verify")
 os.makedirs(WORK, exist_ok=True)
 
-# GUI 客户区坐标（依据 600x600 布局，见 软著/图片/图1、图2）
-C_MEDIA_ENTRY = (250, 283)
-C_KEY_ENTRY = (250, 420)
-C_MEDIA_BROWSE = (470, 283)
-C_KEY_BROWSE = (470, 420)
-C_DECRYPT_RADIO = (140, 357)
-C_RUN_ENCRYPT = (198, 479)
-C_RUN_DECRYPT = (198, 529)
+# GUI 客户区坐标（实测自真实控件，见 tools/ 下的界面探针输出）
+C_MEDIA_ENTRY = (254, 186)
+C_KEY_ENTRY = (254, 332)
+C_MEDIA_BROWSE = (490, 186)
+C_KEY_BROWSE = (490, 332)
+C_DECRYPT_RADIO = (148, 270)
+C_RUN_ENCRYPT = (199, 392)
+C_RUN_DECRYPT = (199, 443)
 
 results = []
 
@@ -101,6 +102,30 @@ def close_window(h):
         pass
 
 
+def force_foreground(hwnd):
+    """把窗口强制带到前台。
+
+    直接调 SetForegroundWindow 会被系统的前台锁拒绝（返回 0），
+    标准做法是先把当前前台线程的输入队列用 AttachThreadInput 接过来再设置。
+    否则窗口可能被别的窗口挡住，后续的鼠标点击会落到别人身上。
+    """
+    user32 = ctypes.windll.user32
+    try:
+        fg = user32.GetForegroundWindow()
+        t1 = user32.GetWindowThreadProcessId(fg, None)
+        t2 = user32.GetWindowThreadProcessId(hwnd, None)
+        if t1 != t2:
+            user32.AttachThreadInput(t1, t2, True)
+        user32.ShowWindow(hwnd, 9)          # SW_RESTORE
+        user32.BringWindowToTop(hwnd)
+        user32.SetForegroundWindow(hwnd)
+        if t1 != t2:
+            user32.AttachThreadInput(t1, t2, False)
+    except Exception as e:  # noqa: BLE001
+        print("      ! 置顶失败：%s" % e)
+    time.sleep(0.5)
+
+
 def paste_into(ox, oy, x, y, text, label):
     """往 Tk 输入框里填内容：先清空再粘贴（避免与已有内容拼接）。"""
     set_clipboard(text)
@@ -124,8 +149,10 @@ def wait_native_dialog(pid, timeout=20):
     return None, None
 
 
-def pick_file_via_dialog(ox, oy, bx, by, path, label, pid):
+def pick_file_via_dialog(ox, oy, bx, by, path, label, pid, main_h=None):
     """点「浏览...」，在原生对话框里粘贴完整路径并回车。原生对话框对中文路径更稳。"""
+    if main_h:
+        force_foreground(main_h)
     set_clipboard(path)
     pyautogui.click(ox + bx, oy + by)
     h, t = wait_native_dialog(pid)
@@ -150,6 +177,7 @@ def run_operation(pid, main_h, xy, label):
     """点一次「执行操作」并等结果对话框；没反应才补点一次（避免重复执行）。"""
     ox, oy = win32gui.ClientToScreen(main_h, (0, 0))
     for attempt in (1, 2):
+        force_foreground(main_h)
         pyautogui.click(ox + xy[0], oy + xy[1])
         h, t, secs = wait_dialog(pid, main_h, timeout=20)
         if h:
@@ -185,7 +213,7 @@ def main():
     for i in range(90):
         time.sleep(1)
         for h, t, p in app_windows():
-            if t == "媒体加密解密工具":
+            if "加密解密工具" in t:
                 main_win = (h, t, p, i + 1)
                 break
         if main_win:
@@ -201,7 +229,7 @@ def main():
 
     # ---------- 加密 ----------
     print("\n[2] 加密流程")
-    pick_file_via_dialog(ox, oy, *C_MEDIA_BROWSE, src, "文件路径", pid)
+    pick_file_via_dialog(ox, oy, *C_MEDIA_BROWSE, src, "图片路径", pid, main_h=h)
     dh, dtitle = run_operation(pid, h, C_RUN_ENCRYPT, "加密")
     pyautogui.screenshot(os.path.join(WORK, "B_encrypted.png"))
     check("加密弹出「成功」对话框", dtitle == "成功", "实际对话框：%r" % (dtitle,))
@@ -222,8 +250,8 @@ def main():
     pyautogui.click(ox + C_DECRYPT_RADIO[0], oy + C_DECRYPT_RADIO[1])
     time.sleep(1.5)
     pyautogui.screenshot(os.path.join(WORK, "C_decrypt_mode.png"))
-    pick_file_via_dialog(ox, oy, *C_MEDIA_BROWSE, enc_img[0], "文件路径", pid)
-    pick_file_via_dialog(ox, oy, *C_KEY_BROWSE, enc_key[0], "密钥路径", pid)
+    pick_file_via_dialog(ox, oy, *C_MEDIA_BROWSE, enc_img[0], "图片路径", pid, main_h=h)
+    pick_file_via_dialog(ox, oy, *C_KEY_BROWSE, enc_key[0], "密钥路径", pid, main_h=h)
     dh2, dtitle2 = run_operation(pid, h, C_RUN_DECRYPT, "解密")
     pyautogui.screenshot(os.path.join(WORK, "D_decrypted.png"))
     check("解密弹出「成功」对话框", dtitle2 == "成功", "实际对话框：%r" % (dtitle2,))

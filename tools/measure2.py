@@ -4,8 +4,7 @@ import os
 
 PROJECT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FILES = ["main.py", "utils.py", "theme.py", "encryption.py", "decryption.py",
-         "video_utils.py", "opencv_accelerator.py", "simple_video_encryption.py",
-         "simple_video_decryption.py", "gui.py", "simple_test.py"]
+         "opencv_accelerator.py", "gui.py", "simple_test.py"]
 
 
 def disp_h(text, width):

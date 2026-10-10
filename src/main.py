@@ -1,10 +1,10 @@
 version = "1.0.0"
 # 版本号
-# #1.0.0升级了视频加密和进度条功能
+# 1.0.0：图片像素置乱加密/解密，含进度显示与硬件加速自适应
 import tkinter as tk
-from gui import MediaCryptoGUI
+from gui import ImageCryptoGUI
 
 if __name__ == "__main__":
     root = tk.Tk()
-    app = MediaCryptoGUI(root)
+    app = ImageCryptoGUI(root)
     root.mainloop()

@@ -46,10 +46,7 @@ SOURCE_FILES = [
     "src/theme.py",
     "src/encryption.py",
     "src/decryption.py",
-    "src/video_utils.py",
     "src/opencv_accelerator.py",
-    "src/simple_video_encryption.py",
-    "src/simple_video_decryption.py",
     "src/gui.py",
 ]
 

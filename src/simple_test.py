@@ -1,30 +1,29 @@
 import os
 import sys
-print("Testing video encryption/decryption module loading...")
+print("Testing image encryption/decryption module loading...")
 
 try:
-    from video_utils import check_ffmpeg, has_audio
-    print("[OK] video_utils loaded successfully")
-    
-    ffmpeg_ok = check_ffmpeg()
-    print(f"FFmpeg available: {ffmpeg_ok}")
-    
+    from encryption import encrypt_image
+    print("[OK] encryption loaded successfully")
 except Exception as e:
-    print(f"[FAIL] video_utils load failed: {e}")
-
-try:
-    from simple_video_encryption import encrypt_video_simple
-    print("[OK] simple_video_encryption loaded successfully")
-except Exception as e:
-    print(f"[FAIL] simple_video_encryption load failed: {e}")
+    print(f"[FAIL] encryption load failed: {e}")
     import traceback
     traceback.print_exc()
 
 try:
-    from simple_video_decryption import decrypt_video_simple
-    print("[OK] simple_video_decryption loaded successfully")
+    from decryption import decrypt_image
+    print("[OK] decryption loaded successfully")
 except Exception as e:
-    print(f"[FAIL] simple_video_decryption load failed: {e}")
+    print(f"[FAIL] decryption load failed: {e}")
+    import traceback
+    traceback.print_exc()
+
+try:
+    from opencv_accelerator import check_opencv_accel_available
+    print("[OK] opencv_accelerator loaded successfully")
+    print(f"OpenCV hardware acceleration available: {check_opencv_accel_available()}")
+except Exception as e:
+    print(f"[FAIL] opencv_accelerator load failed: {e}")
     import traceback
     traceback.print_exc()
 

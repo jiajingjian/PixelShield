@@ -4,29 +4,35 @@ from tkinter import filedialog, messagebox, ttk
 from utils import get_decrypted_directory, get_content_directory, get_encrypted_directory, set_content_directory
 from encryption import encrypt_image
 from decryption import decrypt_image
-from simple_video_encryption import encrypt_video_simple
-from simple_video_decryption import decrypt_video_simple
 from theme import AppTheme
 from opencv_accelerator import check_opencv_accel_available, get_opencv_accel_info
 import threading
 import queue
 
+# 支持的图片格式（加密时可选；解密时选择加密后的 PNG）
+IMAGE_FILETYPES = [
+    ("图片文件", "*.png;*.jpg;*.jpeg;*.bmp;*.gif"),
+    ("PNG 图片", "*.png"),
+    ("所有文件", "*.*"),
+]
 
-class MediaCryptoGUI:
+
+class ImageCryptoGUI:
+    """图片加密解密工具界面（只处理图片）。"""
+
     def __init__(self, root):
         self.root = root
-        self.root.title("媒体加密解密工具")
+        self.root.title("图片加密解密工具")
         self.root.geometry("600x600")
         self.root.resizable(False, False)
-        
+
         AppTheme.apply_theme(root)
 
         self.media_path = tk.StringVar()
         self.key_path = tk.StringVar()
-        self.media_type = tk.StringVar(value="image")
         self.operation = tk.StringVar(value="encrypt")
         self.progress_var = tk.DoubleVar()
-        
+
         self.hardware_accel_available = check_opencv_accel_available()
         self.hardware_accel_info = get_opencv_accel_info() if self.hardware_accel_available else None
 
@@ -41,12 +47,12 @@ class MediaCryptoGUI:
         main_frame = ttk.Frame(self.root, style='App.TFrame', padding=AppTheme.SPACING['xl'])
         main_frame.pack(fill=tk.BOTH, expand=True)
 
-        title_label = ttk.Label(main_frame, text="媒体加密解密工具", style='Title.TLabel')
+        title_label = ttk.Label(main_frame, text="图片加密解密工具", style='Title.TLabel')
         title_label.grid(row=0, column=0, columnspan=3, pady=(0, AppTheme.SPACING['xl']))
 
         dir_frame = ttk.LabelFrame(main_frame, text="存储位置", style='Card.TLabelframe', padding=AppTheme.SPACING['lg'])
         dir_frame.grid(row=1, column=0, columnspan=3, sticky=tk.W+tk.E, pady=(0, AppTheme.SPACING['lg']))
-        
+
         ttk.Label(dir_frame, text="存储目录:", style='Card.TLabel').grid(row=0, column=0, sticky=tk.W, pady=AppTheme.SPACING['sm'])
         self.dir_path_var = tk.StringVar(value=get_content_directory())
         self.dir_entry = ttk.Entry(dir_frame, textvariable=self.dir_path_var, width=40, style='Normal.TEntry')
@@ -54,21 +60,14 @@ class MediaCryptoGUI:
         dir_button = ttk.Button(dir_frame, text="选择...", style='Small.TButton', command=self.browse_directory)
         dir_button.grid(row=0, column=2, padx=AppTheme.SPACING['md'], pady=AppTheme.SPACING['sm'])
 
-        self.type_frame = ttk.LabelFrame(main_frame, text="类型选择", style='Card.TLabelframe', padding=AppTheme.SPACING['lg'])
-        type_frame = self.type_frame
-        type_frame.grid(row=2, column=0, columnspan=3, sticky=tk.W+tk.E, pady=(0, AppTheme.SPACING['lg']))
-
-        ttk.Radiobutton(type_frame, text="图片", variable=self.media_type, value="image", style='Card.TRadiobutton').grid(row=0, column=0, padx=AppTheme.SPACING['xl'], pady=AppTheme.SPACING['sm'])
-        ttk.Radiobutton(type_frame, text="视频", variable=self.media_type, value="video", style='Card.TRadiobutton').grid(row=0, column=1, padx=AppTheme.SPACING['xl'], pady=AppTheme.SPACING['sm'])
-
-        ttk.Label(main_frame, text="文件路径:", style='Normal.TLabel').grid(row=3, column=0, sticky=tk.W, pady=AppTheme.SPACING['sm'])
+        ttk.Label(main_frame, text="图片路径:", style='Normal.TLabel').grid(row=2, column=0, sticky=tk.W, pady=AppTheme.SPACING['sm'])
         self.media_path_entry = ttk.Entry(main_frame, textvariable=self.media_path, width=48, style='Normal.TEntry')
-        self.media_path_entry.grid(row=3, column=1, padx=AppTheme.SPACING['md'], pady=AppTheme.SPACING['sm'])
-        ttk.Button(main_frame, text="浏览...", style='Small.TButton', command=self.browse_media).grid(row=3, column=2, padx=AppTheme.SPACING['md'], pady=AppTheme.SPACING['sm'])
+        self.media_path_entry.grid(row=2, column=1, padx=AppTheme.SPACING['md'], pady=AppTheme.SPACING['sm'])
+        ttk.Button(main_frame, text="浏览...", style='Small.TButton', command=self.browse_media).grid(row=2, column=2, padx=AppTheme.SPACING['md'], pady=AppTheme.SPACING['sm'])
 
         self.operation_frame = ttk.LabelFrame(main_frame, text="操作选择", style='Card.TLabelframe', padding=AppTheme.SPACING['lg'])
         operation_frame = self.operation_frame
-        operation_frame.grid(row=4, column=0, columnspan=3, sticky=tk.W+tk.E, pady=(0, AppTheme.SPACING['lg']))
+        operation_frame.grid(row=3, column=0, columnspan=3, sticky=tk.W+tk.E, pady=(AppTheme.SPACING['md'], AppTheme.SPACING['lg']))
 
         ttk.Radiobutton(operation_frame, text="加密", variable=self.operation, value="encrypt", style='Card.TRadiobutton').grid(row=0, column=0, padx=AppTheme.SPACING['xl'], pady=AppTheme.SPACING['sm'])
         ttk.Radiobutton(operation_frame, text="解密", variable=self.operation, value="decrypt", style='Card.TRadiobutton').grid(row=0, column=1, padx=AppTheme.SPACING['xl'], pady=AppTheme.SPACING['sm'])
@@ -82,27 +81,27 @@ class MediaCryptoGUI:
         self.toggle_key_frame()
 
         self.progress_frame = ttk.Frame(main_frame, style='App.TFrame')
-        self.progress_frame.grid(row=6, column=0, columnspan=3, sticky=tk.W+tk.E, pady=(AppTheme.SPACING['lg'], 0))
-        
+        self.progress_frame.grid(row=5, column=0, columnspan=3, sticky=tk.W+tk.E, pady=(AppTheme.SPACING['lg'], 0))
+
         ttk.Label(self.progress_frame, text="进度:", style='Normal.TLabel').pack(side=tk.LEFT, padx=(0, AppTheme.SPACING['md']), pady=AppTheme.SPACING['sm'])
         progress_bar = ttk.Progressbar(self.progress_frame, variable=self.progress_var, length=0, mode='determinate', style='Normal.Horizontal.TProgressbar')
         progress_bar.pack(side=tk.LEFT, fill=tk.X, expand=True, pady=AppTheme.SPACING['sm'])
 
         button_frame = ttk.Frame(main_frame, style='App.TFrame')
-        button_frame.grid(row=7, column=0, columnspan=3, pady=AppTheme.SPACING['xl'])
-        
+        button_frame.grid(row=6, column=0, columnspan=3, pady=AppTheme.SPACING['xl'])
+
         self.execute_btn = ttk.Button(button_frame, text="执行操作", style='Primary.TButton', command=self.execute_operation, width=15)
         self.execute_btn.pack(side=tk.LEFT, padx=AppTheme.SPACING['md'])
-        
+
         self.cancel_btn = ttk.Button(button_frame, text="取消", style='Secondary.TButton', command=self.cancel_operation, width=15, state=tk.DISABLED)
         self.cancel_btn.pack(side=tk.LEFT, padx=AppTheme.SPACING['md'])
 
         self.status_var = tk.StringVar(value="就绪")
-        ttk.Label(main_frame, textvariable=self.status_var, style='Success.TLabel').grid(row=8, column=0, columnspan=3, pady=(AppTheme.SPACING['md'], 0))
+        ttk.Label(main_frame, textvariable=self.status_var, style='Success.TLabel').grid(row=7, column=0, columnspan=3, pady=(AppTheme.SPACING['md'], 0))
 
     def toggle_key_frame(self, *args):
         if self.operation.get() == "decrypt":
-            self.key_frame.grid(row=5, column=0, columnspan=3, sticky=tk.W+tk.E, pady=(0, AppTheme.SPACING['lg']))
+            self.key_frame.grid(row=4, column=0, columnspan=3, sticky=tk.W+tk.E, pady=(0, AppTheme.SPACING['lg']))
         else:
             self.key_frame.grid_remove()
 
@@ -113,19 +112,13 @@ class MediaCryptoGUI:
             set_content_directory(directory)
 
     def browse_media(self):
-        if self.media_type.get() == "image":
-            file_path = filedialog.askopenfilename(
-                filetypes=[("图片文件", "*.png;*.jpg;*.jpeg;*.bmp;*.gif"), ("所有文件", "*.*")]
-            )
-        else:
-            file_path = filedialog.askopenfilename(
-                filetypes=[("视频文件", "*.mp4;*.avi;*.mov;*.wmv;*.mkv"), ("所有文件", "*.*")]
-            )
+        file_path = filedialog.askopenfilename(title="选择图片", filetypes=IMAGE_FILETYPES)
         if file_path:
             self.media_path.set(file_path)
 
     def browse_key(self):
         file_path = filedialog.askopenfilename(
+            title="选择密钥文件",
             filetypes=[("密钥文件", "*.key"), ("所有文件", "*.*")]
         )
         if file_path:
@@ -133,7 +126,7 @@ class MediaCryptoGUI:
 
     def execute_operation(self):
         if not self.media_path.get():
-            messagebox.showerror("错误", "请选择文件")
+            messagebox.showerror("错误", "请选择图片文件")
             return
 
         if self.is_processing:
@@ -147,7 +140,7 @@ class MediaCryptoGUI:
         self.progress_var.set(0)
         self.is_processing = True
         self.cancel_flag = False
-        
+
         self.execute_btn.config(state=tk.DISABLED)
         self.cancel_btn.config(state=tk.NORMAL)
 
@@ -163,18 +156,12 @@ class MediaCryptoGUI:
     def _execute_operation_thread(self):
         try:
             if self.operation.get() == "encrypt":
-                if self.media_type.get() == "image":
-                    self._encrypt_image_thread()
-                else:
-                    self._encrypt_video_thread()
+                self._encrypt_image_thread()
             else:
                 if not self.key_path.get():
                     self.queue.put(('error', "请选择密钥文件"))
                     return
-                if self.media_type.get() == "image":
-                    self._decrypt_image_thread()
-                else:
-                    self._decrypt_video_thread()
+                self._decrypt_image_thread()
         except Exception as e:
             self.queue.put(('error', str(e)))
 
@@ -213,7 +200,7 @@ class MediaCryptoGUI:
     def _encrypt_image_thread(self):
         media_path = self.media_path.get()
 
-        self.queue.put(('status', "正在加密..."))
+        self.queue.put(('status', "正在加密图片..."))
         self.queue.put(('progress', 0))
 
         def progress_callback(progress):
@@ -241,7 +228,7 @@ class MediaCryptoGUI:
         media_path = self.media_path.get()
         key_path = self.key_path.get()
 
-        self.queue.put(('status', "正在解密..."))
+        self.queue.put(('status', "正在解密图片..."))
         self.queue.put(('progress', 0))
 
         def progress_callback(progress):
@@ -262,77 +249,6 @@ class MediaCryptoGUI:
         self.queue.put(('success', {
             'title': "成功",
             'message': f"解密成功！文件保存在:\n{decrypted_dir}",
-            'directory': decrypted_dir
-        }))
-
-    def _encrypt_video_thread(self):
-        media_path = self.media_path.get()
-
-        self.queue.put(('status', "正在加密视频..."))
-        self.queue.put(('progress', 0))
-
-        def status_callback(status):
-            if self.cancel_flag:
-                raise Exception("操作已取消")
-            self.queue.put(('status', status))
-
-        def progress_callback(progress):
-            if self.cancel_flag:
-                raise Exception("操作已取消")
-            self.queue.put(('progress', progress))
-
-        try:
-            encrypted_video_path, key_path = encrypt_video_simple(
-                media_path, "",
-                status_callback=status_callback, progress_callback=progress_callback
-            )
-        except Exception as e:
-            if "取消" in str(e):
-                self.queue.put(('cancelled', None))
-                return
-            raise
-
-        encrypted_dir = get_encrypted_directory()
-        self.queue.put(('status', f"视频加密成功！文件保存在: {encrypted_dir}"))
-        self.queue.put(('success', {
-            'title': "成功",
-            'message': f"视频加密成功！文件保存在:\n{encrypted_dir}",
-            'directory': encrypted_dir
-        }))
-
-    def _decrypt_video_thread(self):
-        media_path = self.media_path.get()
-        key_path = self.key_path.get()
-
-        self.queue.put(('status', "正在解密视频..."))
-        self.queue.put(('progress', 0))
-
-        def status_callback(status):
-            if self.cancel_flag:
-                raise Exception("操作已取消")
-            self.queue.put(('status', status))
-
-        def progress_callback(progress):
-            if self.cancel_flag:
-                raise Exception("操作已取消")
-            self.queue.put(('progress', progress))
-
-        try:
-            output_video_path = decrypt_video_simple(
-                media_path, key_path,
-                status_callback, progress_callback
-            )
-        except Exception as e:
-            if "取消" in str(e):
-                self.queue.put(('cancelled', None))
-                return
-            raise
-
-        decrypted_dir = get_decrypted_directory()
-        self.queue.put(('status', f"视频解密成功！文件保存在: {decrypted_dir}"))
-        self.queue.put(('success', {
-            'title': "成功",
-            'message': f"视频解密成功！文件保存在:\n{decrypted_dir}",
             'directory': decrypted_dir
         }))
 

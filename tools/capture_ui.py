@@ -3,7 +3,7 @@
 capture_ui.py —— 为软件著作权《说明书》截取真实运行界面图。
 
 严格保证「不伪造界面」：
-  1. 真实实例化 gui.MediaCryptoGUI，按真实控件状态逐帧截图（优先方法）；
+  1. 真实实例化 gui.ImageCryptoGUI，按真实控件状态逐帧截图（优先方法）；
   2. 若截图不可用，则回退为「离线合成」：仍然实例化真实 GUI、使用真实
      theme.AppTheme 的颜色/字体/控件文本/几何尺寸绘制位图，并在图中注明
      「离线合成（未截屏）」，绝不冒充真实截屏。
@@ -181,7 +181,7 @@ def synth_page(gui, win, title, watermark):
     f_norm = font(14)
     f_small = font(12)
 
-    d.text((W // 2, 18), "媒体加密解密工具", fill=COLORS["text_primary"],
+    d.text((W // 2, 18), "图片加密解密工具", fill=COLORS["text_primary"],
            font=f_title, anchor="ma")
 
     y = 58
@@ -203,20 +203,8 @@ def synth_page(gui, win, title, watermark):
     d.text((470, y + 6), "选择...", fill=COLORS["text_primary"], font=f_small, anchor="ma")
     y += 46
 
-    # 类型选择
-    card("类型选择")
-    for i, (txt, val) in enumerate((("图片", "image"), ("视频", "video"))):
-        cx = 60 + i * 110
-        sel = gui.media_type.get() == val
-        d.ellipse([cx, y + 2, cx + 14, y + 16], outline=COLORS["primary"] if sel else COLORS["border"],
-                  width=2, fill=COLORS["primary"] if sel else "white")
-        if sel:
-            d.ellipse([cx + 4, y + 6, cx + 10, y + 12], fill="white")
-        d.text((cx + 22, y + 3), txt, fill=COLORS["text_primary"], font=f_norm)
-    y += 40
-
-    # 文件路径
-    d.text((20, y + 4), "文件路径:", fill=COLORS["text_primary"], font=f_norm)
+    # 图片路径
+    d.text((20, y + 4), "图片路径:", fill=COLORS["text_primary"], font=f_norm)
     d.rectangle([106, y, 430, y + 26], fill="white", outline=COLORS["border"])
     d.text((112, y + 6), (gui.media_path.get() or "（未选择）")[:46],
            fill=COLORS["text_primary"] if gui.media_path.get() else COLORS["text_disabled"], font=f_small)
@@ -313,9 +301,9 @@ def main():
     os.makedirs(OUT_DIR, exist_ok=True)
 
     root = tk.Tk()
-    from gui import MediaCryptoGUI
+    from gui import ImageCryptoGUI
 
-    gui = MediaCryptoGUI(root)
+    gui = ImageCryptoGUI(root)
     root.update_idletasks()
     root.update()
     root.after(400, lambda: None)
@@ -369,10 +357,9 @@ def main():
 
     # 图 3：加密进行中（进度条 + 状态文字）
     gui.operation.set("encrypt")
-    gui.media_path.set(r"D:\素材\示例视频.mp4")
-    gui.media_type.set("video")
+    gui.media_path.set(r"D:\素材\示例照片.png")
     gui.progress_var.set(62)
-    gui.status_var.set("正在加密视频... 1240/2000")
+    gui.status_var.set("正在加密图片...")
     settle()
     if use_real:
         ok = save(grab_window(root), "图3-加密进行中.png")
@@ -400,7 +387,7 @@ def main():
              "图4-完成提示.png")
     dlg.destroy()
 
-    # 图 5：关键控件特写（类型选择 + 操作选择区域）
+    # 图 5：关键控件特写（操作选择 + 进度条区域）
     settle()
     if use_real:
         try:

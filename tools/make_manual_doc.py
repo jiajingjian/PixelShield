@@ -21,6 +21,11 @@ IMG_DIR = os.path.join(OUT_DIR, "图片")
 SOFTWARE_NAME = "图片加密解密工具"
 SOFTWARE_VERSION = "V1.0.0"
 AUTHOR = "贾京健"
+
+# 封面中部用大号红字展示的软件下载地址
+DOWNLOAD_URL = "https://pan.quark.cn/s/78b1c38cc2d7?pwd=Pj1G"
+DOWNLOAD_PWD = "Pj1G"
+
 HEADER_TEXT = "%s %s" % (SOFTWARE_NAME, SOFTWARE_VERSION)
 DOC_TITLE = "%s\n软件使用说明书" % SOFTWARE_NAME
 
@@ -294,6 +299,23 @@ def build():
         p1 = cells[1].paragraphs[0]
         r1 = p1.add_run(v); set_run(r1, size=11)
         cells[0].width = Cm(4.2); cells[1].width = Cm(7.0)
+
+    # ---- 下载地址（封面中部，大号红字） ----
+    RED = (0xFF, 0x00, 0x00)
+
+    doc.add_paragraph().paragraph_format.space_after = Pt(26)
+
+    p = doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p.paragraph_format.space_after = Pt(8)
+    r = p.add_run("软件下载地址"); set_run(r, size=20, bold=True, color=RED)
+
+    p = doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p.paragraph_format.space_after = Pt(8)
+    r = p.add_run(DOWNLOAD_URL); set_run(r, size=18, bold=True, color=RED)
+
+    p = doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p.paragraph_format.space_after = Pt(0)
+    r = p.add_run("提取码：%s" % DOWNLOAD_PWD); set_run(r, size=18, bold=True, color=RED)
 
     doc.add_paragraph().add_run().add_break(WD_BREAK.PAGE)   # 封面单独成页
 

@@ -1,0 +1,53 @@
+# ============================================================
+#  图片/视频加密解密工具 —— 版本库忽略规则
+#  加这个文件的原因：本仓库此前没有 .gitignore，
+#  导致 .envs 虚拟环境（458 MB / 7000+ 文件）和 __pycache__
+#  被一起提交进了版本库。
+# ============================================================
+
+# ---- 本地虚拟环境（体积巨大，绝不应进版本库）----
+.envs/
+.venv/
+venv/
+env/
+
+# ---- Python 编译缓存 ----
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+
+# ---- PyInstaller 打包中间产物 ----
+build_pyi/
+*.manifest
+warn-*.txt
+xref-*.html
+
+# ---- tools/ 里生成的版面标定与渲染产物（可随时重新生成）----
+tools/calib/
+tools/calib2/
+tools/hi/
+tools/pdf/
+tools/spages/
+tools/search/
+tools/sweep/
+
+# ---- dist 里自动生成的旧版本备份（正式 exe 仍会提交）----
+dist/_previous/
+
+# ---- 运行数据：加解密结果不进版本库 ----
+媒体/已加密/
+媒体/已解密/
+
+# ---- 编辑器 / 操作系统 ----
+.vscode/
+.idea/
+*.swp
+Thumbs.db
+desktop.ini
+
+# ---- 临时与日志 ----
+*.log
+*.tmp
+~$*

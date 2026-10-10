@@ -34,12 +34,18 @@ tools/spages/
 tools/search/
 tools/sweep/
 
-# ---- dist 里自动生成的旧版本备份（正式 exe 仍会提交）----
+# ---- dist 里自动生成的旧版本备份 ----
 dist/_previous/
 dist_onedir/_previous/
 
 # ---- 目录版打包产物（162 MB，体积太大，不进版本库）----
 dist_onedir/
+
+# ---- 打包产物统一走 GitHub Release，不再提交进仓库 ----
+# 以前 dist/ 里的 exe 是提交进仓库的，导致每个版本都往 git 历史里塞 60+ MB。
+# 现在发布流程改为：build_exe.py 打包 -> tools/publish_release.py 上传到 Release。
+dist/*.exe
+dist/*.zip
 
 # ---- 软著登记材料：只在本地保存，不进版本库 ----
 软著/

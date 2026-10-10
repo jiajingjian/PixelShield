@@ -16,6 +16,7 @@
 
 import argparse
 import os
+import pathlib
 import re
 import shutil
 import subprocess
@@ -24,9 +25,12 @@ import time
 
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 SPEC_FILE = os.path.join(PROJECT_ROOT, 'pixecrypto.spec')
+SPEC_FILE_ONEDIR = os.path.join(PROJECT_ROOT, 'pixecrypto_onedir.spec')
 ENTRY_FILE = os.path.join(PROJECT_ROOT, 'src', 'main.py')
 DIST_DIR = os.path.join(PROJECT_ROOT, 'dist')
+DIST_DIR_ONEDIR = os.path.join(PROJECT_ROOT, 'dist_onedir')
 WORK_DIR = os.path.join(PROJECT_ROOT, 'build_pyi')
+WORK_DIR_ONEDIR = os.path.join(PROJECT_ROOT, 'build_pyi_onedir')
 BACKUP_DIR = os.path.join(DIST_DIR, '_previous')
 
 REQUIRED_MODULES = [
@@ -59,7 +63,7 @@ def read_version():
     return '1.0.0'
 
 
-def check_environment():
+def check_environment(onedir=False):
     """打包前自检，把能提前发现的问题全部报出来。"""
     print('=' * 64)
     print('环境自检')
@@ -67,6 +71,9 @@ def check_environment():
     print('  Python      : %s (%s)' % (sys.version.split()[0], sys.executable))
     print('  项目目录    : %s' % PROJECT_ROOT)
     print('  平台        : %s' % sys.platform)
+    mode = ('目录版 onedir（不解包到临时目录，启动更快、更抗环境问题）' if onedir
+            else '单文件版 onefile（每次运行都要解包到临时目录）')
+    print('  打包形态    : %s' % mode)
 
     ok = True
 
@@ -81,8 +88,9 @@ def check_environment():
     else:
         print('  源码文件    : %d 个齐全' % len(REQUIRED_SOURCES))
 
-    if not os.path.exists(SPEC_FILE):
-        print('  ! 找不到 %s' % SPEC_FILE)
+    spec = SPEC_FILE_ONEDIR if onedir else SPEC_FILE
+    if not os.path.exists(spec):
+        print('  ! 找不到 %s' % spec)
         ok = False
 
     print('  依赖模块：')
@@ -104,34 +112,36 @@ def check_environment():
     return ok
 
 
-def backup_existing(exe_name):
-    """把 dist 里同名的旧 exe 挪进 dist/_previous/<时间戳>/，避免覆盖丢失。"""
-    target = os.path.join(DIST_DIR, exe_name)
-    if not os.path.exists(target):
+def backup_existing(target_path, dist_dir):
+    """把 dist 里同名的旧产物（onefile 是文件，onedir 是目录）挪进 _previous/<时间戳>/。"""
+    if not os.path.exists(target_path):
         return None
     stamp = time.strftime('%Y%m%d_%H%M%S')
-    dest_dir = os.path.join(BACKUP_DIR, stamp)
+    dest_dir = os.path.join(dist_dir, '_previous', stamp)
     os.makedirs(dest_dir, exist_ok=True)
-    dest = os.path.join(dest_dir, exe_name)
-    shutil.move(target, dest)
-    print('  已备份旧文件 -> %s' % dest)
+    dest = os.path.join(dest_dir, os.path.basename(target_path))
+    shutil.move(target_path, dest)
+    print('  已备份旧产物 -> %s' % dest)
     return dest
 
 
-def run_pyinstaller(app_name):
+def run_pyinstaller(app_name, onedir=False):
+    dist = DIST_DIR_ONEDIR if onedir else DIST_DIR
+    work = WORK_DIR_ONEDIR if onedir else WORK_DIR
+    spec = SPEC_FILE_ONEDIR if onedir else SPEC_FILE
     cmd = [
         sys.executable, '-m', 'PyInstaller',
         '--noconfirm',
         '--clean',
         '--log-level', 'INFO',
-        '--distpath', DIST_DIR,
-        '--workpath', WORK_DIR,
-        SPEC_FILE,
+        '--distpath', dist,
+        '--workpath', work,
+        spec,
     ]
     env = dict(os.environ)
     env['PIXE_APP_VERSION'] = app_name
     print('=' * 64)
-    print('开始打包：%s' % ' '.join(cmd))
+    print('开始打包（%s）：%s' % ('目录版 onedir' if onedir else '单文件版 onefile', ' '.join(cmd)))
     print('=' * 64)
     proc = subprocess.run(cmd, cwd=PROJECT_ROOT, env=env)
     return proc.returncode
@@ -205,18 +215,24 @@ def main():
     parser = argparse.ArgumentParser(description='打包图片/视频加密解密工具')
     parser.add_argument('--smoke', action='store_true', help='打包后启动一次做冒烟测试')
     parser.add_argument('--dry-run', action='store_true', help='只做环境自检')
-    parser.add_argument('--no-backup', action='store_true', help='不备份 dist 里的同名旧 exe')
+    parser.add_argument('--no-backup', action='store_true', help='不备份 dist 里的同名旧产物')
+    parser.add_argument('--onedir', action='store_true',
+                        help='打目录版（不解包到 %TEMP%，启动更快、更抗环境问题；需整个文件夹一起分发）')
     args = parser.parse_args()
 
     version = read_version()
     app_name = '图片加密解密工具%s' % version
     exe_name = app_name + '.exe'
-    exe_path = os.path.join(DIST_DIR, exe_name)
+    dist = DIST_DIR_ONEDIR if args.onedir else DIST_DIR
+    # onefile：dist\<名称>.exe ；onedir：dist_onedir\<名称>\<名称>.exe
+    target = os.path.join(dist, app_name if args.onedir else exe_name)
+    exe_path = os.path.join(target, exe_name) if args.onedir else target
 
+    print('打包形态：%s' % ('目录版 onedir' if args.onedir else '单文件版 onefile'))
     print('目标产物：%s' % exe_path)
     print()
 
-    if not check_environment():
+    if not check_environment(onedir=args.onedir):
         print()
         print('自检未通过，已停止。请先解决上面标 [缺少] / ! 的问题。')
         return 1
@@ -226,11 +242,11 @@ def main():
         print('自检通过（--dry-run，未执行打包）。')
         return 0
 
-    os.makedirs(DIST_DIR, exist_ok=True)
+    os.makedirs(dist, exist_ok=True)
     if not args.no_backup:
-        backup_existing(exe_name)
+        backup_existing(target, dist)
 
-    rc = run_pyinstaller(version)
+    rc = run_pyinstaller(version, onedir=args.onedir)
     if rc != 0:
         print()
         print('打包失败，PyInstaller 退出码 %s' % rc)
@@ -241,10 +257,17 @@ def main():
         print('打包命令成功，但没有生成 %s，请检查上面日志。' % exe_path)
         return 1
 
-    size_mb = os.path.getsize(exe_path) / (1024 * 1024)
+    if args.onedir:
+        total = sum(f.stat().st_size for f in pathlib.Path(target).rglob('*') if f.is_file())
+        size_mb = total / (1024 * 1024)
+    else:
+        size_mb = os.path.getsize(exe_path) / (1024 * 1024)
+
     print()
     print('=' * 64)
     print('打包完成：%s (%.1f MB)' % (exe_path, size_mb))
+    if args.onedir:
+        print('注意：目录版必须整个文件夹一起复制/分发，不能只发 exe。')
     print('=' * 64)
 
     if args.smoke:

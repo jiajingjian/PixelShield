@@ -126,13 +126,25 @@ pixe/
 显式声明隐藏导入），因此换一台机器也能得到一致的结果。用打包脚本调用：
 
 ```bash
-python build_exe.py            # 打包，产物输出到 dist/
+python build_exe.py            # 单文件版，产物输出到 dist/
+python build_exe.py --onedir   # 目录版，产物输出到 dist_onedir/<名称>/
 python build_exe.py --smoke    # 打包后顺便启动一次，确认主窗口能出现
 python build_exe.py --dry-run  # 只做环境自检，不执行打包
 ```
 
+**单文件版（onefile）与目录版（onedir）怎么选：**
+
+| | 单文件版 `dist/` | 目录版 `dist_onedir/` |
+| --- | --- | --- |
+| 分发 | 就一个 exe，方便 | 必须整个文件夹一起发 |
+| 启动 | 每次运行都要把 60+ MB 解包到系统临时目录，首次约 3 秒 | 不解包，立刻启动 |
+| 抗环境问题 | 临时目录不可写、被杀软拦截、或 exe 所在文件夹带异常 ACL 时，会弹 `Could not create temporary directory!` 并退出 | 不受上述问题影响 |
+
+> 如果双击单文件版出现 `Could not create temporary directory!`，说明它所在位置的环境
+> 不允许创建临时目录：把 exe 换到别的文件夹（例如桌面）再试，或者改用目录版。
+
 打包前会自检 Python 版本、10 个源码文件、以及 PyInstaller / NumPy / OpenCV /
-Pillow / tkinter 是否齐全；`dist/` 里同名的旧 exe 会先自动备份到
+Pillow / tkinter 是否齐全；`dist/` 里同名的旧产物会先自动备份到
 `dist/_previous/<时间戳>/`，不会被直接覆盖。
 
 打完包建议再跑一次验收脚本：

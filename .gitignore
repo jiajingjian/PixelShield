@@ -20,6 +20,7 @@ __pycache__/
 
 # ---- PyInstaller 打包中间产物 ----
 build_pyi/
+build_pyi_onedir/
 *.manifest
 warn-*.txt
 xref-*.html
@@ -35,6 +36,10 @@ tools/sweep/
 
 # ---- dist 里自动生成的旧版本备份（正式 exe 仍会提交）----
 dist/_previous/
+dist_onedir/_previous/
+
+# ---- 目录版打包产物（162 MB，体积太大，不进版本库）----
+dist_onedir/
 
 # ---- 软著登记材料：只在本地保存，不进版本库 ----
 软著/

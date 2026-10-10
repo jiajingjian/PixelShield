@@ -69,7 +69,6 @@ def decrypt_image(input_path, key_path, progress_callback=None):
     
     decrypted_dir = get_decrypted_directory()
     
-    # 确保目录存在
     if not os.path.exists(decrypted_dir):
         os.makedirs(decrypted_dir)
     

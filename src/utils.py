@@ -35,17 +35,13 @@ def _resolve_default_content_dir():
     return os.path.join(os.path.expanduser('~'), 'Documents', '媒体')
 
 
-# 默认目录名称（中文）
 DEFAULT_CONTENT_DIR = _resolve_default_content_dir()
 
-# 全局变量，存储当前使用的目录
 _content_dir = DEFAULT_CONTENT_DIR
 
-# 已加密和已解密目录
 ENCRYPTED_DIR = os.path.join(_content_dir, '已加密')
 DECRYPTED_DIR = os.path.join(_content_dir, '已解密')
 
-# 确保目录存在
 def ensure_directory_exists(directory):
     """确保目录存在"""
     directory = os.path.normpath(directory)  # 规范化路径
@@ -55,7 +51,6 @@ def ensure_directory_exists(directory):
     except Exception as e:
         print(f"创建目录失败 {directory}: {e}")
 
-# 初始化目录
 ensure_directory_exists(_content_dir)
 ensure_directory_exists(ENCRYPTED_DIR)
 ensure_directory_exists(DECRYPTED_DIR)
@@ -66,7 +61,6 @@ def set_content_directory(directory):
     global _content_dir
     _content_dir = os.path.normpath(directory)  # 规范化路径
     ensure_directory_exists(_content_dir)
-    # 更新已加密和已解密目录
     global ENCRYPTED_DIR, DECRYPTED_DIR
     ENCRYPTED_DIR = os.path.join(_content_dir, '已加密')
     DECRYPTED_DIR = os.path.join(_content_dir, '已解密')

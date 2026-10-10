@@ -30,7 +30,6 @@ def encrypt_image(input_path, output_dir, progress_callback=None):
     
     encrypted_dir = get_encrypted_directory()
     
-    # 确保目录存在
     if not os.path.exists(encrypted_dir):
         os.makedirs(encrypted_dir)
     

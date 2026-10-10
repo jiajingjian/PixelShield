@@ -5,7 +5,6 @@ from tkinter import ttk
 class AppTheme:
     """应用主题配置类"""
     
-    # 颜色配置
     COLORS = {
         'primary': '#2563EB',
         'primary_dark': '#1D4ED8',
@@ -26,7 +25,6 @@ class AppTheme:
         'progress_bg': '#E2E8F0'
     }
     
-    # 字体配置
     FONTS = {
         'title': ('Microsoft YaHei UI', 14, 'bold'),
         'heading': ('Microsoft YaHei UI', 12, 'bold'),
@@ -35,7 +33,6 @@ class AppTheme:
         'mono': ('Consolas', 10)
     }
     
-    # 间距配置
     SPACING = {
         'xs': 2,
         'sm': 4,
@@ -45,7 +42,6 @@ class AppTheme:
         'xxl': 20
     }
     
-    # 圆角配置
     BORDER_WIDTH = {
         'thin': 1,
         'normal': 2,
@@ -57,20 +53,16 @@ class AppTheme:
         """应用主题到根窗口"""
         style = ttk.Style()
         
-        # 尝试使用现代主题
         try:
             style.theme_use('clam')
         except:
             pass
         
-        # 配置根窗口背景
         root.configure(bg=cls.COLORS['background'])
         
-        # 配置 TFrame 样式
         style.configure('App.TFrame', background=cls.COLORS['background'])
         style.configure('Card.TFrame', background=cls.COLORS['surface'], relief='flat')
         
-        # 配置 TLabelFrame 样式
         style.configure('Card.TLabelframe', 
                        background=cls.COLORS['surface'],
                        foreground=cls.COLORS['text_primary'],
@@ -80,7 +72,6 @@ class AppTheme:
                        foreground=cls.COLORS['text_primary'],
                        font=cls.FONTS['heading'])
         
-        # 配置 TLabel 样式
         style.configure('Normal.TLabel', 
                        background=cls.COLORS['background'],
                        foreground=cls.COLORS['text_primary'],
@@ -102,7 +93,6 @@ class AppTheme:
                        foreground=cls.COLORS['success'],
                        font=cls.FONTS['normal'])
         
-        # 配置 TButton 样式
         style.configure('Primary.TButton', 
                        font=cls.FONTS['normal'],
                        padding=(cls.SPACING['lg'], cls.SPACING['md']),
@@ -127,7 +117,6 @@ class AppTheme:
                        foreground='#1E293B',
                        background='#FFFFFF')
         
-        # 配置 TEntry 样式
         style.configure('Normal.TEntry', 
                        font=cls.FONTS['normal'],
                        fieldbackground=cls.COLORS['surface'],
@@ -138,7 +127,6 @@ class AppTheme:
                   bordercolor=[('focus', cls.COLORS['primary']),
                                ('!focus', cls.COLORS['border'])])
         
-        # 配置 TRadiobutton 样式
         style.configure('Normal.TRadiobutton', 
                        font=cls.FONTS['normal'],
                        background=cls.COLORS['background'],
@@ -152,7 +140,6 @@ class AppTheme:
                              ('selected', cls.COLORS['primary'])],
                   foreground=[('selected', 'white')])
         
-        # 配置 TCheckbutton 样式
         style.configure('Normal.TCheckbutton', 
                        font=cls.FONTS['normal'],
                        background=cls.COLORS['background'],
@@ -166,7 +153,6 @@ class AppTheme:
                              ('selected', cls.COLORS['primary'])],
                   foreground=[('selected', 'white')])
         
-        # 配置 TProgressbar 样式
         style.configure('Normal.Horizontal.TProgressbar',
                        thickness=16,
                        troughcolor=cls.COLORS['progress_bg'],
@@ -175,7 +161,6 @@ class AppTheme:
                        lightcolor=cls.COLORS['progress'],
                        darkcolor=cls.COLORS['success_dark'])
         
-        # 配置 Tooltip 样式
         style.configure('Tooltip.TLabel',
                        background='#FFFBEB',
                        foreground='#78350F',

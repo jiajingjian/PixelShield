@@ -12,6 +12,7 @@ make_manual_doc.py —— 生成软件著作权登记《说明书》（软件使
 """
 
 import os
+import re
 import sys
 
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -179,11 +180,22 @@ def build():
         return p
 
     def numbered(text, size=10):
-        p = doc.add_paragraph(style="List Number")
+        # 手动编号：向上数「紧邻的编号段落」得到本项序号，遇到别的内容就从 1 重来。
+        # 原来用 Word 的 List Number 样式，全文共用一个计数序列，会跨小节连续编号
+        # （3.1 的方式二会从 4. 开始、3.3 卸载方法变成 8./9./10.）。
+        n = 0
+        for prev in reversed(doc.paragraphs):
+            if re.match(r"^\d+\.\s", prev.text or ""):
+                n += 1
+            else:
+                break
+        p = doc.add_paragraph()
+        p.paragraph_format.left_indent = Pt(20)
+        p.paragraph_format.first_line_indent = Pt(-20)
         p.paragraph_format.space_after = Pt(1)
         p.paragraph_format.line_spacing_rule = WD_LINE_SPACING.MULTIPLE
         p.paragraph_format.line_spacing = 1.2
-        r = p.add_run(text)
+        r = p.add_run("%d. %s" % (n + 1, text))
         set_run(r, size=size)
         return p
 
